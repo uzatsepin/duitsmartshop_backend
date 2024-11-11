@@ -1,11 +1,32 @@
 # docker-compose.yml
 version: '3'
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - backend
+    restart: always
+  certbot: 
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command: certonly --webroot -w /var/www/certbot --force-renewal --email your@email.com -d felearn.pro --agree-tos
+
   backend:
     build: .
     container_name: backend
-    ports:
-      - "3030:3030"
+    expose:
+      - 3030
     environment:
       - DB_USER=${DB_USER}
       - DB_NAME=${DB_NAME}
