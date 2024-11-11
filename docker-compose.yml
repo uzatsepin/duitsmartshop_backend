@@ -14,13 +14,14 @@ services:
     depends_on:
       - backend
     restart: always
-  certbot: 
+
+  certbot:
     image: certbot/certbot
     container_name: certbot
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --force-renewal --email your@email.com -d felearn.pro --agree-tos
+    command: certonly --webroot -w /var/www/certbot --force-renewal --email razdev0110@gmail.com -d felearn.pro --agree-tos
 
   backend:
     build: .
@@ -51,23 +52,10 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 5s
       retries: 10
-
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
-    environment:
-      PMA_HOST: mysql
-      MYSQL_ROOT_PASSWORD: ${DB_MYSQL_ROOT_PASSWORD}
-    ports:
-      - "8080:80"
-    depends_on:
-      - mysql
 
 volumes:
   mysql_data:
