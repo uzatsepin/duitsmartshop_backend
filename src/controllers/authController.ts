@@ -14,7 +14,19 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     try {
         const { username, email, password, roleId } = req.body;
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // Validate required fields
+        if (!username || !email || !password) {
+            res.status(400).json({ message: 'Відсутні поля імʼя, емейл або пароль' });
+            return;
+        }
+
+        // Validate password
+        if (typeof password !== 'string' || password.length < 6) {
+            res.status(400).json({ message: 'Пароль має бути довшим за 6 символів' });
+            return;
+        }
+
+        const hashedPassword = await bcrypt.hash(password.toString(), 10);
 
         const user = new User();
         user.username = username;
@@ -25,21 +37,33 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         await AppDataSource.getRepository(User).save(user);
 
         const token = jwt.sign(
-            { id: user.id, email: user.email, roleId: user.role.id },
-            JWT_SECRET,
+            { id: user.id, email: user.email, roleId: user.role },
+            process.env.SECRET_JWT || '',
             { expiresIn: '24h' }
-          );
+        );
 
         const { password: _, ...userWithoutPassword } = user;
 
-        res.status(201).json({ message: 'User registered successfully', token, user: userWithoutPassword });
+        res.status(201).json({ 
+            message: 'User registered successfully', 
+            token, 
+            user: userWithoutPassword 
+        });
         
     } catch (error) {
+        console.error('Error details:', {
+            error,
+            body: req.body,
+            stack: error instanceof Error ? error.stack : undefined
+        });
+
         if (error instanceof QueryFailedError && error.message.includes('Duplicate entry')) {
             res.status(400).json({ message: 'Користувач з таким email вже існує' });
         } else {
-            console.error('Error registering user:', error);
-            res.status(500).json({ message: 'Internal server error' });
+            res.status(500).json({ 
+                message: 'Internal server error',
+                error: error instanceof Error ? error.message : 'Unknown error'
+            });
         }
     }
 };
