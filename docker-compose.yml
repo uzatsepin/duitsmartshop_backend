@@ -1,9 +1,7 @@
-# docker-compose.yml
 version: '3'
 services:
   nginx:
     image: nginx:alpine
-    container_name: nginx
     ports:
       - "80:80"
       - "443:443"
@@ -15,19 +13,8 @@ services:
       - backend
     restart: always
 
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    depends_on:
-      - nginx
-    command: certonly --webroot -w /var/www/certbot --email razdev0110@gmail.com -d felearn.pro --agree-tos --non-interactive
-
   backend:
     build: .
-    container_name: backend
     expose:
       - 3030
     environment:
@@ -46,7 +33,6 @@ services:
 
   mysql:
     image: mysql:8.0
-    container_name: mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
